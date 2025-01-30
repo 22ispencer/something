@@ -3,6 +3,10 @@ const c = @cImport({
     @cInclude("curses.h");
 });
 
+pub fn cPrint(list: *std.ArrayList(u8), comptime format: []const u8, args: anytype) !void {
+    try list.writer().print(format ++ "\x00", args);
+}
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
@@ -28,7 +32,7 @@ pub fn main() !void {
     var message = std.ArrayList(u8).init(alloc);
     defer message.deinit();
 
-    try message.writer().print("Esc Delay: {d}\x00", .{esc_delay});
+    try cPrint(&message, "Esc Delay: {d}", .{esc_delay});
 
     _ = c.mvprintw(@divTrunc(lines, 2), @divTrunc(cols - @as(c_int, @intCast(message.items.len)), 2), message.items.ptr);
 
