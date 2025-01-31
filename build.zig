@@ -23,6 +23,8 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.linkLibC();
+    exe.root_module.addCMacro("_XOPEN_SOURCE_EXTENDED", "1");
+    exe.linkSystemLibrary("panel");
     exe.linkSystemLibrary("ncursesw");
 
     // This declares intent for the executable to be installed into the
