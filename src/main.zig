@@ -31,12 +31,27 @@ const Application = struct {
     stdwin: ?*c.WINDOW,
     lines: u16,
     cols: u16,
-    pub fn init() Application {
+    alloc: std.mem.Allocator,
+    pub fn init(alloc: std.mem.Allocator) Application {
+        _ = c.setlocale(c.LC_ALL, "");
+        _ = c.set_escdelay(60);
+        const stdwin = c.initscr();
+        _ = c.noecho();
+        _ = c.cbreak();
+
+        _ = c.keypad(stdwin, true);
+
+        const lines: u16 = @intCast(c.getmaxy(stdwin));
+        const cols: u16 = @intCast(c.getmaxx(stdwin));
         return .{
-            .stdwin = null,
-            .lines = 0,
-            .cols = 0,
+            .stdwin = stdwin,
+            .lines = lines,
+            .cols = cols,
+            .alloc = alloc,
         };
+    }
+    fn deinit() void {
+        _ = c.endwin();
     }
 };
 
@@ -49,20 +64,8 @@ pub fn main() !void {
             std.debug.print("Memory leak detected", .{});
         }
     }
-    var app = Application.init();
-
-    _ = c.setlocale(c.LC_ALL, "");
-    _ = c.set_escdelay(60);
-    app.stdwin = c.initscr();
-    defer _ = c.endwin();
-    _ = c.noecho();
-    _ = c.cbreak();
-
-    _ = c.keypad(app.stdwin, true);
-
-    app.cols = @intCast(c.getmaxx(app.stdwin));
-    app.lines = @intCast(c.getmaxy(app.stdwin));
-    // const esc_delay = c.get_escdelay();
+    var app = Application.init(alloc);
+    defer app.deinit();
 
     var buf = std.ArrayList(u8).init(alloc);
     defer buf.deinit();
