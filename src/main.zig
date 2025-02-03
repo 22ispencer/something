@@ -5,29 +5,8 @@ const c = @cImport({
     @cInclude("curses.h");
 });
 
-pub fn cPrint(list: *std.ArrayList(u8), comptime format: []const u8, args: anytype) !void {
-    try list.writer().print(format ++ "\x00", args);
-}
-
-pub fn cAppend(list: *std.ArrayList(u8), char: u8) !void {
-    if (list.items.len > 0 and list.getLast() == 0) {
-        _ = list.pop();
-    }
-
-    try list.append(char);
-    try list.append(0);
-}
-
-pub fn cWriteAll(list: *std.ArrayList(u8), str: []const u8) !void {
-    if (list.items.len > 0 and list.getLast() == 0) {
-        _ = list.pop();
-    }
-
-    try list.writer().writeAll(str);
-    try list.append(0);
-}
-
 const Application = struct {
+    const Self = @This();
     stdwin: ?*c.WINDOW,
     lines: u16,
     cols: u16,
@@ -50,7 +29,7 @@ const Application = struct {
             .alloc = alloc,
         };
     }
-    fn deinit() void {
+    pub fn deinit(_: Self) void {
         _ = c.endwin();
     }
 };
@@ -70,18 +49,5 @@ pub fn main() !void {
     var buf = std.ArrayList(u8).init(alloc);
     defer buf.deinit();
 
-    while (true) {
-        var char: c.wint_t = undefined;
-        _ = c.get_wch(&char);
-
-        if (char < std.math.maxInt(u8)) {
-            try cAppend(&buf, @intCast(char));
-        } else if (buf.items.len > 1 and char == c.KEY_BACKSPACE) {
-            _ = buf.orderedRemove(buf.items.len - 2);
-            _ = c.clear();
-        }
-        _ = c.mvprintw(@divTrunc(app.lines, 2), @divTrunc(app.cols - @as(c_int, @intCast(buf.items.len)), 2), buf.items.ptr);
-
-        _ = c.refresh();
-    }
+    std.time.sleep(std.time.ns_per_s * 3);
 }
