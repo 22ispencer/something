@@ -38,7 +38,7 @@ pub fn main() !void {
     var panels = std.ArrayList(?*c.PANEL).init(alloc);
     defer panels.deinit();
 
-    try wins.append(c.newwin(lines, cols, 0, 10));
+    try wins.append(c.newwin(lines, cols, 0, 0));
     try panels.append(c.new_panel(wins.items[0]));
 
     _ = c.wbkgd(wins.items[0], @intCast(c.COLOR_PAIR(1)));
