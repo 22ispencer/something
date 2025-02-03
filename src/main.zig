@@ -20,6 +20,9 @@ pub fn main() !void {
     defer _ = c.endwin();
     _ = c.noecho();
     _ = c.cbreak();
+    _ = c.start_color();
+
+    _ = c.init_pair(1, c.COLOR_BLACK, c.COLOR_GREEN);
 
     _ = c.keypad(stdwin, true);
 
@@ -29,10 +32,19 @@ pub fn main() !void {
     var buf = std.ArrayList(u8).init(alloc);
     defer buf.deinit();
 
-    try buf.writer().print("{d}, {d}\x00", .{ lines, cols });
+    var wins = std.ArrayList(?*c.WINDOW).init(alloc);
+    defer wins.deinit();
 
-    _ = c.addstr(buf.items.ptr);
-    _ = c.refresh();
+    var panels = std.ArrayList(?*c.PANEL).init(alloc);
+    defer panels.deinit();
 
-    _ = c.getch();
+    try wins.append(c.newwin(lines, cols, 0, 10));
+    try panels.append(c.new_panel(wins.items[0]));
+
+    _ = c.wbkgd(wins.items[0], @intCast(c.COLOR_PAIR(1)));
+
+    _ = c.update_panels();
+    _ = c.doupdate();
+
+    std.time.sleep(std.time.ns_per_s * 2);
 }
